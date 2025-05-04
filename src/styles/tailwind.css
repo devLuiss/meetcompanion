@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Content Colors */
+  --color-content-primary: #E92E30;
+  --color-content-secondary: #FAFAFA;
+  --color-content-foreground: #171717;
+  --color-content-primary-foreground: #FFF;
+  --color-content-secondary-foreground: #525252;
+  --color-content-muted-foreground: #737373;
+
+  /* Background Colors */
+  --color-bg-primary: #E92E30;
+  --color-bg-secondary: #FAFAFA;
+  --color-bg-background: #FFF;
+  --color-bg-muted: #F5F5F5;
+  --color-bg-input: #E5E5E5;
+
+  /* Border Colors */
+  --color-border-primary: #E92E30;
+  --color-border: #E5E5E5;
+
+  /* Accent Colors */
+  --color-accent: #FFF6F6;
+  --color-accent-foreground: #C71C1E;
+
+  /* Hover Colors */
+  --color-primary-hover: #C71C1E;
+  --color-secondary-hover: rgba(245, 245, 245, 0.8);
+}
+
+/* Estilos base mínimos que serão aplicados mesmo sem as classes Tailwind */
+@layer base {
+  body {
+    @apply m-0 font-sans antialiased text-content-foreground bg-bg-background;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  html,
+  body,
+  #root {
+    @apply w-full h-full m-0 p-0;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  }
+}

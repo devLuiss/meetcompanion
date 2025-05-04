@@ -1,0 +1,92 @@
+{
+  "name": "stupid-leetcode-club",
+  "version": "0.2.0",
+  "main": "electron/main.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron:dev": "cross-env NODE_ENV=development concurrently \"npm run start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:dev:win": "cross-env NODE_ENV=development concurrently \"npm run start\" \"wait-on --timeout 120000 http://localhost:3000 && electron .\"",
+    "electron": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "test:e2e": "npx playwright test"
+  },
+  "author": "Lucas Montano <your-email@example.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "description": "Your AI companion for LeetCode - because sometimes we all feel stupid",
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "@radix-ui/react-dialog": "^1.1.11",
+    "@radix-ui/react-slot": "^1.2.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.507.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1",
+    "react-syntax-highlighter": "^15.6.1",
+    "shadcn-ui": "^0.9.5",
+    "tailwind-merge": "^3.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "wait-on": "^7.2.0"
+  },
+  "browserslist": {
+    "production": [
+      "last 1 electron version"
+    ],
+    "development": [
+      "last 1 electron version"
+    ]
+  },
+  "build": {
+    "appId": "com.lucasmontano.stupid-leetcode-club",
+    "productName": "Stupid LeetCode Club",
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development"
+    },
+    "extraMetadata": {
+      "main": "electron/main.js"
+    }
+  }
+}
