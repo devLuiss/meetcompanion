@@ -238,6 +238,10 @@ const OpenAI = ({ apiKey, cloudflareAccount, geminiApiKey, whisperDeviceId }) =>
       return;
     }
 
+    console.log('[WHISPER DEBUG] Iniciando processo de gravação');
+    window.electronAPI && window.electronAPI.logToMain && 
+      window.electronAPI.logToMain(`[WHISPER DEBUG] Iniciando processo de gravação`);
+      
     setResponse('');
     setWhisperError('');
     setWhisperTranscription('');
@@ -270,8 +274,22 @@ const OpenAI = ({ apiKey, cloudflareAccount, geminiApiKey, whisperDeviceId }) =>
 
     recordedChunksRef.current = [];
     const mediaRecorder = new MediaRecorder(stream);
+    
+    console.log('[WHISPER DEBUG] Configuração do MediaRecorder:', {
+      mimeType: mediaRecorder.mimeType,
+      state: mediaRecorder.state,
+      audioBitsPerSecond: mediaRecorder.audioBitsPerSecond
+    });
+    window.electronAPI && window.electronAPI.logToMain && 
+      window.electronAPI.logToMain(`[WHISPER DEBUG] MediaRecorder configurado com mimeType: ${mediaRecorder.mimeType}`);
+    
     mediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) recordedChunksRef.current.push(e.data);
+      if (e.data && e.data.size > 0) {
+        console.log(`[WHISPER DEBUG] Chunk de áudio recebido: ${e.data.size} bytes`);
+        window.electronAPI && window.electronAPI.logToMain && 
+          window.electronAPI.logToMain(`[WHISPER DEBUG] Chunk de áudio recebido: ${e.data.size} bytes`);
+        recordedChunksRef.current.push(e.data);
+      }
     };
 
     mediaRecorderRef.current = mediaRecorder;
@@ -306,6 +324,21 @@ const OpenAI = ({ apiKey, cloudflareAccount, geminiApiKey, whisperDeviceId }) =>
       }
 
       const audioBlob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
+      
+      console.log('[WHISPER DEBUG] Gravação finalizada:', {
+        chunks: recordedChunksRef.current.length,
+        totalSize: audioBlob.size,
+        type: audioBlob.type,
+        duration: 'Estimativa baseada no tamanho: ' + Math.round(audioBlob.size / 16000) + 'ms'
+      });
+      window.electronAPI && window.electronAPI.logToMain && 
+        window.electronAPI.logToMain(`[WHISPER DEBUG] Gravação finalizada com ${recordedChunksRef.current.length} chunks, tamanho total: ${audioBlob.size} bytes`);
+
+      if (audioBlob.size < 2000) {
+        console.warn('[WHISPER ALERTA] Áudio gravado muito pequeno (${audioBlob.size} bytes). Isso pode resultar em uma transcrição "you" ou vazia.');
+        window.electronAPI && window.electronAPI.logToMain && 
+          window.electronAPI.logToMain(`[WHISPER ALERTA] Áudio gravado muito pequeno (${audioBlob.size} bytes). Possível problema de captura.`);
+      }
 
       if (window.electronAPI && window.electronAPI.saveWhisperAudio) {
         try {
@@ -329,30 +362,72 @@ const OpenAI = ({ apiKey, cloudflareAccount, geminiApiKey, whisperDeviceId }) =>
       const formData = new FormData();
       formData.append('file', audioBlob, 'audio.webm');
       formData.append('model', 'whisper-1');
+      formData.append('language', 'pt'); // Especificando português como idioma
+      
+      console.log('[WHISPER DEBUG] FormData preparado:', {
+        fileName: 'audio.webm',
+        audioType: audioBlob.type,
+        model: 'whisper-1',
+        language: 'pt'
+      });
+      window.electronAPI && window.electronAPI.logToMain && 
+        window.electronAPI.logToMain(`[WHISPER DEBUG] FormData preparado para requisição com idioma: pt`);
 
       let transcription;
       try {
+        console.log('[WHISPER] Preparando para enviar áudio para API Whisper');
+        window.electronAPI && window.electronAPI.logToMain && 
+          window.electronAPI.logToMain(`[WHISPER] Preparando requisição com tamanho de áudio: ${audioBlob.size} bytes`);
+        
         const whisperResp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: { Authorization: `Bearer ${key}` },
           body: formData,
         });
+        
+        console.log('[WHISPER] Resposta recebida da API Whisper:', whisperResp.status, whisperResp.statusText);
+        window.electronAPI && window.electronAPI.logToMain && 
+          window.electronAPI.logToMain(`[WHISPER] Resposta recebida com status: ${whisperResp.status} ${whisperResp.statusText}`);
+        
         if (!whisperResp.ok) {
           try {
             const errorData = await whisperResp.json();
+            console.error('[WHISPER] Erro na API:', errorData);
+            window.electronAPI && window.electronAPI.logToMain && 
+              window.electronAPI.logToMain(`[WHISPER ERROR DETAILS] ${JSON.stringify(errorData)}`);
             throw new Error(`Whisper API error: ${errorData.error?.message || whisperResp.statusText}`);
           } catch (jsonError) {
+            console.error('[WHISPER] Erro ao processar resposta de erro:', jsonError);
+            window.electronAPI && window.electronAPI.logToMain && 
+              window.electronAPI.logToMain(`[WHISPER ERROR PARSING] ${jsonError.message}`);
             throw new Error(`Whisper API error: ${whisperResp.statusText || 'Unknown error'}`);
           }
         }
 
         const whisperData = await whisperResp.json();
-        console.log('Whisper API response:', whisperData);
+        console.log('[WHISPER] Resposta completa da API:', whisperData);
         window.electronAPI && window.electronAPI.logToMain &&
           window.electronAPI.logToMain(`[WHISPER RESPONSE] ${JSON.stringify(whisperData)}`);
 
         transcription = whisperData.text?.trim() || '';
-        setWhisperTranscription(transcription);
+        console.log('[WHISPER] Transcrição extraída:', transcription);
+        
+        // Verificar se a transcrição está vazia e fornecer feedback apropriado
+        if (!transcription) {
+          console.warn('[WHISPER ALERTA] Transcrição vazia recebida da API');
+          window.electronAPI && window.electronAPI.logToMain && 
+            window.electronAPI.logToMain(`[WHISPER ALERTA] Transcrição vazia recebida da API`);
+          
+          // Definir uma mensagem mais informativa para o usuário
+          setWhisperError('A transcrição retornou vazia. Possíveis causas: áudio muito curto, silencioso ou problema de conexão com a API.');
+          setWhisperTranscription('[Transcrição vazia]');
+          
+          // Mesmo com transcrição vazia, tentar continuar e pedir ao modelo que explique o problema
+          transcription = "A transcrição retornou vazia. Por favor, informe possíveis razões por que o serviço Whisper da OpenAI pode não ter conseguido transcrever meu áudio e dê dicas para melhorar a qualidade da gravação.";
+        } else {
+          setWhisperTranscription(transcription);
+        }
+        
         window.electronAPI && window.electronAPI.logToMain &&
           window.electronAPI.logToMain(`[WHISPER TRANSCRIPTION] ${transcription}`);
       } catch (err) {
@@ -367,6 +442,18 @@ const OpenAI = ({ apiKey, cloudflareAccount, geminiApiKey, whisperDeviceId }) =>
 
       setWhisperStatus('Generating answer...');
       try {
+        console.log('[WHISPER] Enviando transcrição para processamento:', { 
+          prompt: prompt, 
+          transcription: transcription 
+        });
+        window.electronAPI && window.electronAPI.logToMain && 
+          window.electronAPI.logToMain(`[WHISPER CHAT] Enviando prompt: "${prompt}" e transcrição: "${transcription}"`);
+        
+        // Combinar o prompt com a transcrição em uma única mensagem para contextualização
+        const userMessage = prompt ? 
+          `${prompt}\n\nTranscrição do áudio: "${transcription}"` : 
+          `Por favor, responda ao seguinte: "${transcription}"`;
+        
         const chatResp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -376,8 +463,7 @@ const OpenAI = ({ apiKey, cloudflareAccount, geminiApiKey, whisperDeviceId }) =>
           body: JSON.stringify({
             model: "gpt-4o",
             messages: [
-              { role: 'user', content: prompt },
-              { role: 'user', content: transcription }
+              { role: 'user', content: userMessage }
             ],
           }),
         });
