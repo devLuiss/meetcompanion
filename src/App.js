@@ -145,7 +145,9 @@ function App() {
     <div className="w-full h-screen bg-bg-background">
       <div className="flex flex-col w-full h-full" style={{ height: `${heightPercentage}vh` }}>
         <header className="flex justify-between items-center p-4 bg-bg-primary text-content-primary-foreground h-[60px] min-h-[60px]">
-          <h1 className="text-xl font-semibold m-0">Stupid LeetCode Club</h1>
+          <h1 className="text-xl font-semibold m-0">
+            MeetCompanion
+          </h1>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className={`inline-block w-2.5 h-2.5 rounded-full ${apiKey ? "bg-green-500" : "bg-red-500"}`}></span>
