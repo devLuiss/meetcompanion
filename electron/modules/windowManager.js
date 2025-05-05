@@ -45,7 +45,7 @@ function createWindow() {
       frame: true,
       backgroundColor: '#FFFFFF',
       skipTaskbar: false,
-      title: "Stupid LeetCode Club", 
+      title: "meetCompanion", 
       alwaysOnTop: false,
       focusable: true,
       movable: true,

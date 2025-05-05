@@ -65,7 +65,7 @@ function createWindow() {
       frame: true,
       backgroundColor: '#FFFFFF',
       skipTaskbar: false,
-      title: "Stupid LeetCode Club", 
+      title: "meetCompanion", 
       alwaysOnTop: false,
       focusable: true,
       movable: true,
@@ -183,7 +183,7 @@ app.on('will-finish-launching', () => {
 app.on('ready', () => {
   console.log('[STARTUP] App ready event fired');
   // Set app name
-  app.setName("Stupid LeetCode Club");
+  app.setName("meetCompanion");
   console.log('[STARTUP] App name set');
   
   console.log('[STARTUP] Creating window from ready event');
